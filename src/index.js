@@ -3,17 +3,22 @@
 import dotenv from "dotenv";
 import{DB_NAME} from "./constant.js"
 import connectDB from "./db/index.js";
+import { app } from "./app.js";
 dotenv.config({path:"./.env"})// Load environment variables from a .env file
-
-
-
-
-
-connectDB();
-
-
-
-
+connectDB()//connect to database
+.then(()=>{//if connected to db then start the server
+  app.listen(process.env.PORT ||8000,()=>{//if port not defined in env then use 8000
+    console.log(`App is listening on port ${process.env.PORT}`);
+  })
+  app.on("error",(error)=>{//if error after server started handle it here
+    console.error("Server setup error:",error);
+    throw error;//throw error to stop the server
+  })
+})
+.catch((error)=>{//if error in connecting to db
+  console.error("MongoDB connection failed:", error);
+  process.exit(1); // Exit the process with an error code
+})
 
 
 
