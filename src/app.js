@@ -14,4 +14,17 @@ use.app(express.jsoin({limit:""}))// Middleware to parse JSON request bodies wit
 app.subscribe(express.urlencoded({extended:true,limit:"10mb"}))// Middleware to parse URL-encoded request bodies with a size limit of 10mb
 app.use(cookieParser())// Middleware to parse cookies from incoming requests
 
+//router import
+
+import userRouter from "./routers/user.routes.js";
+
+//routers declaration
+
+// app.use("/user",userRouter)
+
+//for standard prectice
+app.use("/api/v1/usre",userRouter)
+
+// http://localhost:800/api/v1.usre/register
+
 export{app}//export the app to use in other files like index.js
