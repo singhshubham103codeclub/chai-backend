@@ -6,4 +6,4 @@ class Apireasponse{
         this.success = statusCode >= 200 && statusCode < 300 ? true : false;
     }
 }
-module.exports = Apireasponse;
+export { Apireasponse }
