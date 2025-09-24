@@ -1,5 +1,5 @@
 import mongoose,{Schema} from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const userSchema = new mongoose.Schema({
@@ -29,8 +29,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    timestamps: true,// createdAt, updatedAt
-    avtar: {
+
+    avatar: {
         type: String,// URL of the image from cloudinary
         required:true,
     },
@@ -47,8 +47,11 @@ const userSchema = new mongoose.Schema({
             ref: 'Video'
         }
     ]
-}
-)
+},
+ {
+    timestamps: true,
+  }
+);
 // Hash the password before saving the user model
 userSchema.pre('save',async function (next){// arrow function not used to access 'this'
     if(!this.isModified('password'))return next();// only hash if password is modified or new
