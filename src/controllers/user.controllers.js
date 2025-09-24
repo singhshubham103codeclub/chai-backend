@@ -18,7 +18,9 @@ const registerUser=asyncHandler(async(req,res)=>{
    // remove password and referesh tocken field from response
    // return response
    const{username,email,fullname,password}=req.body
-   console.log("email",email,username,fullname,password)
+   // console.log("email",email,username,fullname,password)
+   // console.log(req.body)// To check body jashon data object
+   // console.log(req.files)//to check body file object data
    if(
       [username,email,fullname,password].some((field)=>field?.trim()==="")//.some() checks if at least one item in the array matches a condition
        // If even one is empty → it returns true.trim() removes spaces from start and end of a string.
