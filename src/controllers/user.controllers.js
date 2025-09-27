@@ -8,6 +8,8 @@ import Uploadcloudinary from "../utils/fileUploader.js"
 
 import { Apireasponse } from "../utils/Apireasponse.js"
 
+const generetAccessAndrefereshToken=async(userId)
+
 const registerUser=asyncHandler(async(req,res)=>{
    //get user details from frontend
    //validation- not empaty
@@ -75,6 +77,31 @@ const registerUser=asyncHandler(async(req,res)=>{
       new Apireasponse(200,createdUser,"user register successfully")
     );
 
+
+});
+const userLogin=asyncHandler(async(req,res)=>{
+   //req.body se data lelo
+   //user ko email or username se and password se login karao 
+   // And check user are registerd or not
+   // if yes login successfully else user not registerd
+   //check password
+   //access and refresh token
+   // send coockie
+   const {email,username,password}=req.body
+   if(!email || !username){
+      throw new Apierr(440,"username or email are required")
+   };
+   const user = await User.findOne({
+      $or:[{email},{username}]
+   });
+   if(!user){
+      throw new Apierr(404,"user not reagiterd")
+   };
+
+   const isPasswordValid=await user.iscommparePassword(password)
+   if (!isPasswordValid){
+      throw new Apierr(401,"wrongPassword")
+   };
 
 })
 export {registerUser}
