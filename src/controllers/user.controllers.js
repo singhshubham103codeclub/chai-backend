@@ -8,7 +8,20 @@ import Uploadcloudinary from "../utils/fileUploader.js"
 
 import { Apireasponse } from "../utils/Apireasponse.js"
 
-const generetAccessAndrefereshToken=async(userId)
+const generetAccessAndrefereshToken=async(userId)=>{
+   
+   try {
+      const user = await User.findById(userId)
+      const accessToken= user.generetAccessAndrefereshToken();
+      const refereshToken=user.enerateRefreshToken();
+      user.refereshToken= refereshToken
+      user.save({validateBeforeSave:false})
+
+   } catch (error) {
+      throw new Apierr(500,"Something went wrong while genereting tocken")
+      
+   }
+}
 
 const registerUser=asyncHandler(async(req,res)=>{
    //get user details from frontend
