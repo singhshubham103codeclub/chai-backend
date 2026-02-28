@@ -8,14 +8,14 @@ import Uploadcloudinary from "../utils/fileUploader.js"
 
 import { Apireasponse } from "../utils/Apireasponse.js"
 
-const generetAccessAndrefereshToken=async(userId)=>{
+const generetAccessAndrefereshToken=async(userId)=>{// This function generates access and refresh tokens for a user based on their user ID.
    
    try {
-      const user = await User.findById(userId)
-      const accessToken= user.generetAccessAndrefereshToken();
-      const refereshToken=user.enerateRefreshToken();
-      user.refereshToken= refereshToken
-      user.save({validateBeforeSave:false})
+      const user = await User.findById(userId)// This line retrieves the user from the database using their user ID. It uses the User model to find the user by their unique identifier (userId).
+      const accessToken= user.generateAccessToken();//
+      const refereshToken=user.generateRefreshToken();// This line generates a refresh token for the user by calling the generateRefreshToken method on the user object. This method is likely defined in the User model and is responsible for creating a new refresh token that can be used to obtain new access tokens when the current access token expires.
+      user.refereshToken= refereshToken// This line assigns the generated refresh token to the refereshToken field of the user object. This allows the application to store the refresh token in the database for later use when the user needs to refresh their access token.
+      user.save({validateBeforeSave:false})// This line saves the updated user object back to the database. The {validateBeforeSave: false} option is used to skip any validation checks that might be defined in the User model, allowing the refresh token to be saved without triggering any validation errors.
 
    } catch (error) {
       throw new Apierr(500,"Something went wrong while genereting tocken")
@@ -115,7 +115,8 @@ const userLogin=asyncHandler(async(req,res)=>{
    if (!isPasswordValid){
       throw new Apierr(401,"wrongPassword")
    };
-
+   const {accessToken,refereshToken}= await generetAccessAndrefereshToken(user._id);// here we are calling the function to generate access and referesh token and passing user._id as an argument to it.
+   
 })
 export {registerUser}
 console.log("Controller file loaded, registerUser is:", registerUser)
