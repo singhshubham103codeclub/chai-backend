@@ -11,8 +11,7 @@ const storage = multer.diskStorage({
  export const upload = multer({ 
     storage,
 
- })
-
+ });
 
 
  // Import the 'multer' library, which is a middleware for handling 'multipart/form-data'.

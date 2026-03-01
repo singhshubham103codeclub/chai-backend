@@ -116,7 +116,59 @@ const userLogin=asyncHandler(async(req,res)=>{
       throw new Apierr(401,"wrongPassword")
    };
    const {accessToken,refereshToken}= await generetAccessAndrefereshToken(user._id);// here we are calling the function to generate access and referesh token and passing user._id as an argument to it.
-   
+   const LogedInUser = await user.findbyId(user._id).select("-password -refereshToken")// here we are finding the user by their _id and selecting all fields except password and refereshToken to return in the response.
+   const option={
+      httpOnly:true,// This means the cookie cannot be accessed via JavaScript, which helps prevent cross-site scripting (XSS) attacks.
+      secure:true
+   };
+   return res// Finally, we return a response to the client with a status code of 200 (OK). We also set two cookies: one for the refresh token and one for the access token. Both cookies are set with the options defined in the option object (httpOnly and secure). The response body contains a JSON object created using the Apireasponse class, which includes the logged-in user's information (excluding password and refresh token), the access token, and the refresh token, along with a success message.
+   .status(200)
+   .cookie("refereshToken",refereshToken,option)
+   .cookie("accessToken",accessToken,option)
+   .json(
+      new Apireasponse(// yaha pr ham apireasponse class ka use kr rhe hai jisme 4 parameter pass kr rhe hai status code, user data, message jise hamm user ko bhej rahe hai
+         200,
+         {
+            user:LogedInUser,
+            accessToken,
+            refereshToken
+         },
+         "user login successfully"
+      )
+   )
+});
+
+//User logout method 
+
+userLogout=asyncHandler(async(req,res)=>{
+   // get user from req.user
+   // remove referesh token from db
+   // remove cookie
+   // send response
+   const userId= await User.findByIdAndUpdate(
+      req.user._id,
+      {
+         $set:{
+            refereshToken: undefined// here we are using the $set operator to update the refereshToken field of the user document in the database to undefined, effectively removing the refresh token from the user's record. This is done as part of the logout process to ensure that the refresh token can no longer be used to obtain new access tokens after the user has logged out.
+         }
+      },
+      {
+         new:true
+      }
+   )
+   const option={
+      httpOnly:true,
+      secure:true
+   };
+   res.clearCookie("refereshToken",option)
+   res.clearCookie("accessToken",option)
+   return res.status(200).json(
+      new Apireasponse(200,null,"user logout successfully")
+   )
 })
-export {registerUser}
+export {registerUser
+,userLogin
+,userLogout
+
+}
 console.log("Controller file loaded, registerUser is:", registerUser)
