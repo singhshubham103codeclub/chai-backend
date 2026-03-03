@@ -140,7 +140,7 @@ const userLogin=asyncHandler(async(req,res)=>{
 
 //User logout method 
 
-userLogout=asyncHandler(async(req,res)=>{
+const userLogout=asyncHandler(async(req,res)=>{
    // get user from req.user
    // remove referesh token from db
    // remove cookie
@@ -166,9 +166,8 @@ userLogout=asyncHandler(async(req,res)=>{
       new Apireasponse(200,null,"user logout successfully")
    )
 })
-export {registerUser
-,userLogin
-,userLogout
-
+export {registerUser,
+   userLogin,
+   userLogout
 }
 console.log("Controller file loaded, registerUser is:", registerUser)

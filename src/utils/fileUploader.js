@@ -9,7 +9,7 @@ cloudinary.config({
 });
 
 // Upload image to cloudinary
-const Uploadcloudinary = async (filePath) => {
+const Uploadcloudinary = async (filePath) => {// console.log("file path in cloudinary", filePath);
     try {
         if(!filePath) return null;
         const reponse = await cloudinary.uploader.upload(filePath, {
