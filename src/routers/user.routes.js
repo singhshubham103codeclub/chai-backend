@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { userLogin, registerUser , userLogout} from "../controllers/user.controllers.js";//Your controller file (user.controllers.js) contains the function registerUser.
+import { userLogin, registerUser , userLogout, refereshToken} from "../controllers/user.controllers.js";//Your controller file (user.controllers.js) contains the function registerUser.
 // This function defines what should happen when a user hits the /register endpoint
 //👉 Without this import, your router won’t know what to do when someone calls /register.
 
@@ -30,5 +30,7 @@ router.route("/userLogin").post(userLogin)  // This line defines a POST route fo
 
 //secured route for user logout
 router.route("/logout").post(Verify_JWT_Token,userLogout);// here we use Verify_JWT_Token middleware to protect the logout route, ensuring that only authenticated users can access it. The userLogout controller will handle the actual logout logic after the token is verified.
+
+router.route("/refresh-token").post(refereshToken) // This line defines a post route for refreshing tokens. When a GET request is made to /refresh, the refereshToken controller function will be executed to handle the logic for refreshing the user's authentication token.
 
 export default router //export default router → make this router available to app.js so your main server can use it.

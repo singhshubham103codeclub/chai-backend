@@ -168,6 +168,7 @@ const userLogout = asyncHandler(async (req, res) => {
       new Apireasponse(200, null, "user logout successfully")
    )
 })
+// login user ko access token expire hone pr referesh token se new access token generate karna hota hai taki user ko baar baar login na karna pade. Iske liye ham ek refereshToken method banayenge jo client se referesh token lega, usko verify karega, aur agar valid hua to naya access token aur referesh token generate karke client ko bhej dega.
    const refereshToken= asyncHandler(async(req,res)=>{
    // get referesh token from cookie
    // if not token send error
@@ -179,11 +180,30 @@ const userLogout = asyncHandler(async (req, res) => {
    if (!incomingRefereshToken) {
       throw new Apierr(401, "you are not authenticated")
    };
-    jwt.verify(incomingRefereshToken, process.env.REFERESH_TOKEN_SECERET,)
+   try {
+      const decodeToken= jwt.verify(incomingRefereshToken, process.env.REFERESH_TOKEN_SECERET,)
+       const user = await User.findById(decodedToken?._id)
+       if (!user || user.refereshToken !== incomingRefereshToken) {
+         throw new Apierr(401, "you are not authenticated")
+       }
+       const { accessToken,refereshToken}= await generetAccessAndrefereshToken(user._id)
+       const option = {
+         httpOnly: true,
+         secure: true
+      };
+      res.cookie("refereshToken", refereshToken, option)
+      res.cookie("accessToken", accessToken, option)
+      return res.status(200).json(
+         new Apireasponse(200, { accessToken, refereshToken }, "token refreshed successfully")
+      )
+   } catch (error) {
+      throw new Apierr(401, error.message || "you are not authenticated")
+   }
 })
 export {
    registerUser,
    userLogin,
-   userLogout
+   userLogout,
+   refereshToken
 }
 console.log("Controller file loaded, registerUser is:", registerUser)
