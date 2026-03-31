@@ -262,6 +262,12 @@ const userLogout = asyncHandler(async (req, res) => {
       if(!avatar){
          throw new Apierr(500,"something went wrong while uploading avatar")
       }
+      //TODO: delete previous avatar from cloudinary
+      const user= await User.findById(req.user?._id)
+      if(!user?.avatar){
+         const PublicId = user.avatar.split("/").pop().split(".")[0]// here we are extracting the public ID of the previous avatar from the user's avatar URL. The split("/") method is used to split the URL into an array of segments, and then we take the last segment (the filename) using pop(). Finally, we split the filename by "." to separate the name from the extension and take the first part (the name) as the public ID.
+         await DeleteFromCloudinary(PublicId)
+      }
       await User.findByIdAndUpdate(req.user?._id,
          {
             $set:{
@@ -283,6 +289,12 @@ const userLogout = asyncHandler(async (req, res) => {
       const coverImage= await Uploadcloudinary(CoverImageLocalPath)
       if(!coverImage){
          throw new Apierr(500,"something went wrong while uploading cover image")
+      }
+      //TODO: delete previous cover image from cloudinary
+      const user= await User.findById(req.user?._id)
+      if(!user?.coverImage){
+         const PublicId = user.coverImage.split("/").pop().split(".")[0]// here we are extracting the public ID of the previous cover image from the user's cover image URL. The split("/") method is used to split the URL into an array of segments, and then we take the last segment (the filename) using pop(). Finally, we split the filename by "." to separate the name from the extension and take the first part (the name) as the public ID.
+         await DeleteFromCloudinary(PublicId)// here we are calling the DeleteFromCloudinary function and passing the extracted public ID to delete the previous cover image from Cloudinary before updating it with the new one.
       }
       await User.findByIdAndUpdate(req.user?._id,
          {
