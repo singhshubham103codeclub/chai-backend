@@ -200,10 +200,111 @@ const userLogout = asyncHandler(async (req, res) => {
       throw new Apierr(401, error.message || "you are not authenticated")
    }
 })
+   const ChangePassword = asyncHandler(async(req,res)=>{
+      // get user from req.user
+      // get old password and new password from req.body
+      // check old password is correct or not
+      // if not correct send error
+      // if correct update new password in db
+      // send response
+      const user = await User.findById(req.user?._id)
+      const { oldPassword, newPassword } = req.body
+      const isPasswordcorrect = await user.commparePassword(oldPassword)
+      if(!isppasswordcorrect){
+         throw new Apierr(404,"old password is incorrect")}
+         user.password = newPassword
+         await user.save({ validateBeforeSave: false }) 
+         return res.status(200).json(
+            new Apireasponse(200, null, "password changed successfully")
+         )
+      })
+      const CurrenrtUser = asyncHandler(async(req,res)=>{
+         // get user from req.user
+         // send response with user data
+         const user = await User.findById(req.user?._id).select("-password -refereshToken")
+         if(!user){
+            throw new Apierr(404,"user not found")
+         }
+         return res.status(200).json(
+            new Apireasponse(200, user, "current user fetched successfully")
+         )
+      })
+      const updateAccountdetails = asyncHandler(async(req,res)=>{
+         // get user from req.user
+         // get update data from req.body and req.files
+         // if files upload them on cloudinary and get url
+         // update user details in db
+         // send response with updated user data
+         const {email, fullname } = req.body
+         if(!!email || !fullname){
+            throw new Apierr(400,"all fields are required")
+         }
+         const user = await User.findByIdAndUpdate(req.user?._id,
+            {
+               $set:{
+                  email,
+                  fullname
+               }
+            },
+           {new:true}// this option ensures that the updated user document is returned after the update operation is completed. Without this option, the method would return the original document before the update was applied.
+         ).select("-password")
+         return res.status(200).json(
+            new Apireasponse(200, user, "account details updated successfully")
+         )
+      }) 
+      // Here we are defining a function called updateAccountdetails that is wrapped with asyncHandler to handle asynchronous operations and errors. This function is responsible for updating the account details of the currently authenticated user. It retrieves the user's email and fullname from the request body, checks if they are provided, and then updates the user's details in the database using findByIdAndUpdate. Finally, it returns a response with the updated user data.
+      const UpdateAvatar = asyncHandler(async(req,res)=>{
+      const AvatarLocalPath = req.file?.path;
+      if(!AvatarLocalPath){
+            throw new Apierr(400,"avatar file is missing")
+      }
+      const avatar= await Uploadcloudinary(AvatarLocalPath)
+      if(!avatar){
+         throw new Apierr(500,"something went wrong while uploading avatar")
+      }
+      await User.findByIdAndUpdate(req.user?._id,
+         {
+            $set:{
+               avatar:avatar.url
+            }
+         },
+         {new:true}
+      ).select("-password")   
+      return res.status(200).json(
+         new Apireasponse(200, avatar.url, "avatar updated successfully")
+      )
+   })
+   // The UpdateAvatar function is an asynchronous function that handles the process of updating a user's avatar. It first checks if the avatar file is present in the request, and if not, it throws an error. If the file is present, it uploads the avatar to Cloudinary using the Uploadcloudinary utility function. If the upload is successful, it updates the user's avatar URL in the database using findByIdAndUpdate and returns a response with the new avatar URL. If any step fails, it throws an appropriate error message.
+   const UpdateUserCoverImage = asyncHandler(async(req,res)=>{
+      const CoverImageLocalPath = req.file?.path;
+      if(!CoverImageLocalPath){
+            throw new Apierr(400,"cover image file is missing")
+      }
+      const coverImage= await Uploadcloudinary(CoverImageLocalPath)
+      if(!coverImage){
+         throw new Apierr(500,"something went wrong while uploading cover image")
+      }
+      await User.findByIdAndUpdate(req.user?._id,
+         {
+            $set:{
+               coverImage:coverImage.url
+            }
+         },
+         {new:true}
+      ).select("-password")   
+      return res.status(200).json(
+         new Apireasponse(200, coverImage.url, "cover image updated successfully")
+      )
+   })
 export {
    registerUser,
    userLogin,
    userLogout,
-   refereshToken
+   refereshToken,
+   ChangePassword,
+   CurrenrtUser,
+   updateAccountdetails,
+   UpdateAvatar,
+   UpdateUserCoverImage 
 }
 console.log("Controller file loaded, registerUser is:", registerUser)
