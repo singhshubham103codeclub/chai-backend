@@ -22,7 +22,7 @@ const generetAccessAndrefereshToken = async (userId) => {// This function genera
 
    }
 }
-
+//// register function is responsible for handling the user registration process. It takes the user details from the request body, validates them, checks if a user with the same username or email already exists, uploads the avatar and cover image to Cloudinary, creates a new user in the database, and returns a response with the created user's information (excluding password and refresh token) along with a success message.
 const registerUser = asyncHandler(async (req, res) => {
    //get user details from frontend
    //validation- not empaty
@@ -200,6 +200,9 @@ const userLogout = asyncHandler(async (req, res) => {
       throw new Apierr(401, error.message || "you are not authenticated")
    }
 })
+
+// Yaha pr ham change password, get current user, update account details, update avatar, update cover image, get user profile, get watch history ke controllers define karenge. Ye controllers user ke related functionalities ko handle karenge jaise ki password change karna, current user ki details fetch karna, account details update karna, avatar aur cover image update karna, user profile fetch karna, aur watch history fetch karna.
+
    const ChangePassword = asyncHandler(async(req,res)=>{
       // get user from req.user
       // get old password and new password from req.body
@@ -308,6 +311,129 @@ const userLogout = asyncHandler(async (req, res) => {
          new Apireasponse(200, coverImage.url, "cover image updated successfully")
       )
    })
+   const getUserProfile=asyncHandler(async(req,res)=>{
+      const {Username}=req.params
+      if(!Username){
+         throw new Apierr(400,"user is missing")
+      }
+      //ye function user profile ko fetch karne ke liye hai. Yaha pr ham aggregate pipeline ka use kar rhe hai jisme ham pehle user ko match kar rhe hai username se, fir uske subscribers aur subscribed channels ko lookup stage ke through join kar rhe hai, fir $addFields stage me ham subscription counts aur issubscribed field ko add kar rhe hai, aur finally $project stage me ham required fields ko select kar rhe hai jise ham response me bhejna chahte hai.
+      const channel=await User.aggregate([{
+         // match kya karta hai ki database me se user ko find karta hai jiska username req.params se match karta hai. Yaha pr ham username ko lowercase me convert kar rhe hai taki case sensitivity ka issue na aaye. Agar aisa user milta hai jiska username req.params se match karta hai to usko aage ke pipeline me bhejta hai, warna usko ignore kar deta hai.
+         $match:{
+            username:Username?.toLowerCase()
+         }
+         
+      },
+      // lookup stage ka use karke ham subscribtions collection se data ko join kar rhe hai. Yaha pr ham from me subscribtions collection ka naam de rhe hai, localField me _id de rhe hai jo ki users collection ka field hai, foreignField me channel de rhe hai jo ki subscribtions collection ka field hai, aur as me subscribers de rhe hai jisme join hone ke baad subscribers ka data store hoga.
+      {
+         $lookup:{
+            from:"subscribtions",
+            localField:"_id",
+            foreignField:"channel",
+            as:"subscribers"
+         }
+      },
+      {
+         $lookup:{
+            from:"subscribtions",
+            localField:"_id",
+            foreignField:"subscribtion",
+            as:"subscribedChannels"
+         }
+      },
+      {
+         // Adding fields to include subscription counts
+         $addFields:{
+            Subscribscount:{
+               $size:"$subscribers"
+            },
+            //$size ka use karke ham subscribers array ke size ko count kar rhe hai aur usko Subscribscount field me store kar rhe hai. Isse hame pata chalega ki us user ke kitne subscribers hai.
+            channelsuubscribed:{
+               $size:"$subscribedChannels" 
+            },
+            Issubscribed:{
+               $cond:{
+                  if:{$in:[req.user?._id,"subscribers.subscribtion"]},
+                  then: true,
+                  else:false
+               }
+            }
+         }
+      },
+      {
+         $project:{
+            username:1,
+            fullname:1,
+            subscribers:1,
+            subscribedChannels:1,
+            avatar:1,
+            coverImage:1,
+            Issubscribed:1,
+            email:1
+         }
+      }
+   ])
+
+   if(!channel?.length){
+      throw new Apierr(404,"channel not found")
+   }return res.status(200).json(
+      new Apireasponse(200, channel[0], "channel details fetched successfully")
+   )
+
+   })
+    // yaha pr hamne $project stage ka use karke unhi fields ko select kiya hai jise ham response me bhejna chahte hai. Yaha pr ham username, fullname, subscribers, subscribedChannels, avatar, coverImage, Issubscribed, aur email fields ko select kar rhe hai. Isse hame user profile ke liye required information mil jayegi jo ham client ko bhejna chahte hai.
+
+   const getWatchistory= asyncHandler(async(req,res)=>{
+      const user =await User.aggregate([
+         {
+            // Match the user by their ID
+            $match:{
+               _id:new mongoose.Types.ObjectId(req.user?._id)//yaha par ham $match stage ka use karke user ko unke _id se match kar rhe hai. Yaha pr ham new mongoose.Types.ObjectId(req.user?._id) ka use karke req.user._id ko ObjectId me convert kar rhe hai taki wo MongoDB ke _id field ke format me match ho sake. Agar aisa user milta hai jiska _id req.user._id se match karta hai to usko aage ke pipeline me bhejta hai, warna usko ignore kar deta hai.
+            }
+         },
+         // Lookup stage to join the videos collection based on the watchHistory field
+         {
+            $lookup:{
+               from:"videos",
+               localField:"watchHistory",
+               foreignField:"_id",
+               as:"watchHistory",
+               // yaha par ham $lookup stage ka use karke videos collection se data ko join kar rhe hai. Yaha pr ham from me videos collection ka naam de rhe hai, localField me watchHistory de rhe hai jo ki users collection ka field hai, foreignField me _id de rhe hai jo ki videos collection ka field hai, aur as me watchHistory de rhe hai jisme join hone ke baad watch history ke videos ka data store hoga.
+               // Iske alawa ham pipeline ka use karke videos collection ke andar bhi ek aur lookup stage define kar rhe hai jisme ham video ke owner ka data users collection se join kar rhe hai taki hame watch history me videos ke sath unke owner ke details bhi mil jaye.
+               pipeline:[
+                  {
+                     $lookup:{
+                        from:"users",
+                        localField:"owner",
+                        foreignField:"_id",
+                        as:"ownerDetails",
+                        pipeline:[
+                           {
+                              $project:{
+                                 username:1,
+                                 fullname:1,
+                                 avatar:1
+                              }
+                           }
+                        ]
+                     }
+                  }
+               ]
+            }
+         },
+         // Adding a field to include owner details in the watch history videos
+         {
+            $addFields:{
+               owner:{
+                  $first:"$ownerDetails"
+               }
+            }
+         }
+      ])
+      return res.status(200).json(
+         new Apireasponse(200, user[0]?.watchHistory || [], "watch history fetched successfully")
+      )
+   })
 export {
    registerUser,
    userLogin,
@@ -317,6 +443,8 @@ export {
    CurrenrtUser,
    updateAccountdetails,
    UpdateAvatar,
-   UpdateUserCoverImage 
+   UpdateUserCoverImage,
+   getUserProfile ,
+   getWatchistory
 }
 console.log("Controller file loaded, registerUser is:", registerUser)

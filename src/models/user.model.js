@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
     refereshToken: {
         type: String,
     },
-    watschHistory:[
+    watchHistory:[
         {
             type: Schema.Types.ObjectId,
             ref: 'Video'
