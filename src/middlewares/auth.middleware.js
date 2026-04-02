@@ -9,7 +9,7 @@ export const Verify_JWT_Token = asyncHandler(async (req, res, next) => {
     // Authorization header ka format generally aisa hota hai
     // Bearer <token>
     try {
-        const token = req.cookies?.accessToken || req.headers("Authorization")?.replace("Bearer", "") //here we are checking if the access token is present in the cookies or in the Authorization header. If it is present in the cookies, we use that. Otherwise, we check the Authorization header and split it to get the token part (assuming the format is "Bearer <token>").
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
         if (!token) {
             throw new Apierr(401, "Unauthorized")
         };
