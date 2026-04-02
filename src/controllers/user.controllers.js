@@ -150,8 +150,8 @@ const userLogout = asyncHandler(async (req, res) => {
    const userId = await User.findByIdAndUpdate(
       req.user._id,
       {
-         $set: {
-            refereshToken: undefined// here we are using the $set operator to update the refereshToken field of the user document in the database to undefined, effectively removing the refresh token from the user's record. This is done as part of the logout process to ensure that the refresh token can no longer be used to obtain new access tokens after the user has logged out.
+         $unset: {
+            refereshToken:1// here we are using $unset operator to remove the refereshToken field from the user's document in the database. Setting it to 1 indicates that we want to remove this field. After this operation, the user's document will no longer have the refereshToken field, effectively logging the user out by invalidating their refresh token.
          }
       },
       {
