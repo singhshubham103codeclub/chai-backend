@@ -1,0 +1,255 @@
+{
+    "info": {
+        "name": "🔥 Pro User API Automation",
+        "_postman_id": "pro-collection-999",
+        "description": "Full automation: login, token handling, validation, negative testing",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8000/api/v1/users"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "refreshToken",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "🔐 1. Login (Auto Save Token)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"test@gmail.com\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "login"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "let res = pm.response.json();",
+                            "pm.environment.set('token', res.accessToken);",
+                            "pm.environment.set('refreshToken', res.refreshToken);",
+                            "pm.test('Login success', () => pm.response.to.have.status(200));"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "♻️ 2. Auto Refresh Token (Pre-request)",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "if (!pm.environment.get('token')) {",
+                            "    pm.sendRequest({",
+                            "        url: pm.environment.get('baseUrl') + '/refresh-token',",
+                            "        method: 'POST',",
+                            "        header: { 'Content-Type': 'application/json' },",
+                            "        body: {",
+                            "            mode: 'raw',",
+                            "            raw: JSON.stringify({",
+                            "                refreshToken: pm.environment.get('refreshToken')",
+                            "            })",
+                            "        }",
+                            "    }, function (err, res) {",
+                            "        let data = res.json();",
+                            "        pm.environment.set('token', data.accessToken);",
+                            "    });",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/current-user",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "current-user"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "👤 3. Current User (Protected)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/current-user",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "current-user"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('User fetched', () => pm.response.to.have.status(200));",
+                            "let data = pm.response.json();",
+                            "pm.expect(data).to.have.property('email');"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "❌ 4. Unauthorized Access Test",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/watch-history",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "watch-history"
+                    ]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Should fail without token', () => pm.response.to.have.status(401));"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🔑 5. Change Password",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"new123456\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/change-password",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "change-password"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "✏️ 6. Update Account",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"fullname\": \"Updated User\",\n  \"email\": \"updated@gmail.com\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/update-account",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "update-account"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "📺 7. Channel Profile",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "{{baseUrl}}/channel/shubham",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "channel",
+                        "shubham"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "📜 8. Watch History (Protected)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{baseUrl}}/watch-history",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "watch-history"
+                    ]
+                }
+            }
+        }
+    ]
+}
